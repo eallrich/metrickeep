@@ -8,3 +8,6 @@ local/
 
 # User customizations
 core/settings.py
+
+# Whisper databases
+whispers/
