@@ -2,15 +2,23 @@ import datetime
 import json
 import logging
 import os
+import platform
 import time
 
 from flask import Flask, abort, request
+from statsd import StatsClient
 
 from . import settings
 from .whisperdb import Whisper
 
+
 logging.basicConfig(**settings.logging)
 logger = logging.getLogger(__name__)
+
+
+host = platform.node().replace('.', '_')
+statsd = StatsClient('localhost', 48125, prefix="%s.metrickeep" % host)
+
 
 app = Flask(__name__)
 
@@ -89,7 +97,10 @@ def save(metrics):
 def create():
     """Accepts metrics from clients
     
-    Saves metrics to whispers for persistene"""
+    Saves metrics to whispers for persistence"""
+    timer = statsd.timer('metrics.post').start()
+    statsd.incr('metrics.post')
+
     if request.content_type != 'application/json':
         abort(415) # Unsupported media type
     
@@ -130,6 +141,9 @@ def create():
         metrics.append(clean)
     
     save(metrics)
+
+    statsd.incr('metrics.saved', count=len(metrics))
+    timer.stop()
     
     # Created
     return "Saved %d metrics\n" % len(metrics), 201
