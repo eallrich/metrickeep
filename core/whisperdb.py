@@ -1,5 +1,6 @@
 import logging
 import os
+import platform
 import time
 
 from statsd import StatsClient
