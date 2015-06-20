@@ -23,3 +23,4 @@ whisper_path = os.path.join(PROJECT_ROOT, "whispers")
 whisper_archives = "10s:24h,1m:7d,5m:3y"
 whisper_xfilesfactor = 0.0
 whisper_aggregation = "average"
+drift_epsilon = 2 # seconds

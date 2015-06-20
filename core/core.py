@@ -104,7 +104,7 @@ def save(metrics):
     logger.info("Saving %d metrics" % len(metrics))
     for m in metrics:
         wsp = Whisper(m['metric'])
-        wsp.save(m['value'], m['timestamp'])
+        wsp.save(m['value'], m['timestamp'], lenient=True)
 
 
 @app.route('/metrics', methods=['POST',])

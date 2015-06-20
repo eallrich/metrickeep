@@ -39,9 +39,24 @@ class Whisper(object):
                 aggregationMethod=settings.whisper_aggregation
             )
     
-    def save(self, value, timestamp):
+    def save(self, value, timestamp, lenient=False):
         logger.debug("Saving %s: %f" % (self.name, value))
-        whisper.update(self.path, value, timestamp)
+        try:
+            whisper.update(self.path, value, timestamp)
+        except TimestampNotCovered as exc:
+            # The timestamp we were given is either "in the future" (perhaps
+            # because our own clock is delayed) or "before the time the
+            # database remembers". If we're willing to fudge the timestamp,
+            # check whether the difference is less than the configured
+            # epsilon for clock drift. If it is, then try saving the value
+            # again using a timestamp from one second earlier than reported.
+            # If that's still not accepted, a new (unhandled) TimestampNot-
+            # Covered exception will be raised for the caller to handle.
+            if lenient:
+                if abs(timestamp - time.time()) < settings.drift_epsilon:
+                    self.save(value, timestamp-1, lenient=False)
+            else:
+                raise
     
     def fetch(self, start, end=None):
         if not end:
