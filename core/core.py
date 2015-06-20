@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import platform
+import subprocess
 import time
 
 from flask import Flask, abort, request
@@ -26,6 +27,13 @@ app = Flask(__name__)
 @app.route('/')
 def root():
     return str(int(time.time()))
+
+
+@app.route('/revision')
+def gitrevision():
+    process = subprocess.Popen('git log -1'.split(), stdout=subprocess.PIPE)
+    git_info, _ = process.communicate()
+    return git_info.replace('\n','<br />')
 
 
 def find_whispers():
