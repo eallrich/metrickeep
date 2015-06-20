@@ -43,7 +43,7 @@ class Whisper(object):
         logger.debug("Saving %s: %f" % (self.name, value))
         try:
             whisper.update(self.path, value, timestamp)
-        except TimestampNotCovered as exc:
+        except whisper.TimestampNotCovered as exc:
             # The timestamp we were given is either "in the future" (perhaps
             # because our own clock is delayed) or "before the time the
             # database remembers". If we're willing to fudge the timestamp,
