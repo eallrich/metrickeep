@@ -2,11 +2,15 @@ import logging
 import os
 import time
 
+from statsd import StatsClient
 import whisper
 
 from . import settings
 
 logger = logging.getLogger(__name__)
+
+host = platform.node().replace('.', '_')
+statsd = StatsClient('localhost', 48125, prefix="%s.metrickeep.whisper" % host)
 
 class Whisper(object):
     @staticmethod
@@ -52,9 +56,16 @@ class Whisper(object):
             # again using a timestamp from one second earlier than reported.
             # If that's still not accepted, a new (unhandled) TimestampNot-
             # Covered exception will be raised for the caller to handle.
+            statsd.incr('error.timestampnotcovered')
             if lenient:
-                if abs(timestamp - time.time()) < settings.drift_epsilon:
+                delta = timestamp - time.time() # in seconds
+                statsd.timing('timestamp_drift', delta * 1000) # report in ms
+                if abs(delta) < settings.drift_epsilon:
+                    # Ensure lenient is set to False for the next attempt so
+                    # that we don't end up in a loop
                     self.save(value, timestamp-1, lenient=False)
+                    # Report only successful lenient saves
+                    statsd.incr('lenient_save')
             else:
                 raise
     
