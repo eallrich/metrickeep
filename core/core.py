@@ -36,6 +36,12 @@ def gitrevision():
     return git_info.replace('\n','<br />')
 
 
+@app.errorhandler(500)
+def server_problem(error):
+    statsd.incr('metrics.error.500')
+    return "Captured status 500 via error %r" % error, 500
+
+
 def find_whispers():
     whispers = []
     if not os.path.isdir(settings.whisper_path):
